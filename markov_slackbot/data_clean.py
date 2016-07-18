@@ -29,7 +29,7 @@ class Data(object):
         # replace &amp;
         messages['text'] = messages['text'].str.replace('&amp;', '')
         # encode to string
-        return messages['text'].str.encode('UTF-8').astype(str)
+        return messages['text'].astype(str)
 
     def write_to_file(self, messages):
         # open file and append messages to txt
