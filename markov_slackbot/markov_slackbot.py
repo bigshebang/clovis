@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import sys
 import time
 
 from slackclient import SlackClient
@@ -38,14 +37,3 @@ class MarkovSlackbot(object):
         if now > self.last_ping + 3:
             self.slack_client.server.ping()
             self.last_ping = now
-
-
-def main(token):
-    config = {'SLACK_TOKEN': token}
-    markov_slackbot = MarkovSlackbot(config)
-    markov_slackbot.start()
-
-
-if __name__ == "__main__":
-    token = sys.argv[1]
-    main(token)

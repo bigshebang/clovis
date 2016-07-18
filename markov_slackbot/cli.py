@@ -2,13 +2,14 @@
 
 import click
 
+from main import markov_slackbot
+
 
 @click.command()
-def main(args=None):
+@click.argument('config_file')
+def main(config_file):
     """Console script for markov_slackbot"""
-    click.echo("Replace this message by putting your code into "
-               "markov_slackbot.cli.main")
-    click.echo("See click documentation at http://click.pocoo.org/")
+    markov_slackbot(config_file)
 
 
 if __name__ == "__main__":
