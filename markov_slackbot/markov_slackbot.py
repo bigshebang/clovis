@@ -57,6 +57,9 @@ class MarkovSlackbot(object):
         if reply['type'] != 'message':
             return False
 
+        if reply['user'] == self.user_id:
+            return False
+
         if ('<@' + self.user_id + '>' in reply['text'] or
            self.slack_client.server.username in reply['text']):
             return True
