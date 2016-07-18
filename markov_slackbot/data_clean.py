@@ -1,10 +1,11 @@
 import pandas as pd
-import os
+from os import path, listdir
 
 
-class data:
+class Data(object):
     def __init__(self):
-        self.messages_file = open('../data/messages/messages.txt', 'a')
+        messages_dir = path.join(path.pardir, 'data', 'messages')
+        self.messages_file = open(path.join(messages_dir, 'messages.txt'), 'a')
         self.messages_file.seek(0)
         self.messages_file.truncate()
 
@@ -32,7 +33,8 @@ class data:
 
     def write_to_file(self, messages):
         # open file and append messages to txt
-        messages_file = open('../data/messages/messages.txt', 'a')
+        messages_file = open(path.join(path.pardir, 'data', 'messages',
+                             'messages.txt'), 'a')
         for message in messages:
             if ((not message.endswith('.') or
                 not message.endswith('?') or
@@ -43,13 +45,23 @@ class data:
         messages_file.close
 
     def get_data(self):
-        folders = os.listdir('../data')
+        folders = listdir(path.join(path.pardir, 'data'))
+        print(folders)
         for folder in folders:
             if folder == 'messages':
                 continue
-            files = os.listdir('../data/'+folder)
+            files = listdir(path.join(path.pardir, 'data', folder))
             for file in files:
-                # print 'File: ' + '/data/' + folder + '/' + file
-                file = pd.read_json('../data/'+folder+'/'+file)
+                file = pd.read_json(path.join(path.pardir, 'data', folder,
+                                    file))
                 messages = self.clean_data(file)
                 self.write_to_file(messages)
+
+
+def main():
+    data = Data()
+    data.get_data()
+
+
+if __name__ == "__main__":
+    main()
