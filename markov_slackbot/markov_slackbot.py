@@ -2,6 +2,7 @@
 
 import time
 import markovify
+from os import path
 
 from slackclient import SlackClient
 
@@ -36,7 +37,8 @@ class MarkovSlackbot(object):
                 print(reply)
                 if (self.qualify_respondable(reply)):
                     # Get raw text as string.
-                    with open("../data/messages/messages.txt") as f:
+                    with open(path.join(path.pardir, 'data', 'messages',
+                                        'messages.txt')) as f:
                         text = f.read()
 
                     # Build the model.
