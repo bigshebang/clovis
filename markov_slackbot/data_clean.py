@@ -1,17 +1,22 @@
 import pandas as pd
 import os
 
+
 class data:
     def __init__(self):
         self.messages_file = open('../data/messages/messages.txt', 'a')
         self.messages_file.seek(0)
         self.messages_file.truncate()
 
-
-    def clean_data(self,data):
-        # function will remove all messages that contain subtypes /ie. not clean messages (comments, file uploads)
+    def clean_data(self, data):
+        """
+        function will remove all messages that contain subtypes /ie. not clean
+         messages (comments, file uploads)
+        """
         # regex will clean all reaction from messages
-        messages = data[(data['type'] == 'message') & ('subtype' not in data.columns)]
+        messages = data[(data['type'] == 'message') &
+                        ('subtype' not in data.columns)]
+
         # replace in line sections (ie ``` code ```)
         messages['text'] = messages['text'].str.replace(r'(```)[^;]*(```)', '')
         # replace reaction in text
@@ -25,11 +30,14 @@ class data:
         # encode to string
         return messages['text'].str.encode('UTF-8').astype(str)
 
-    def write_to_file(self,messages):
+    def write_to_file(self, messages):
         # open file and append messages to txt
         messages_file = open('../data/messages/messages.txt', 'a')
         for message in messages:
-            if ((not message.endswith('.') or not message.endswith('?') or not message.endswith('!')) and len(message) > 0):
+            if ((not message.endswith('.') or
+                not message.endswith('?') or
+               not message.endswith('!')) and
+               len(message) > 0):
                 message += '. '
             messages_file.write(message + '\n')
         messages_file.close
@@ -45,4 +53,3 @@ class data:
                 file = pd.read_json('../data/'+folder+'/'+file)
                 messages = self.clean_data(file)
                 self.write_to_file(messages)
-
