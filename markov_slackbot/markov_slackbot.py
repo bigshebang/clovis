@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import time
+import markovify
 
 from slackclient import SlackClient
 
@@ -34,7 +35,14 @@ class MarkovSlackbot(object):
             for reply in self.slack_client.rtm_read():
                 print(reply)
                 if (self.qualify_respondable(reply)):
-                    self.output('#markov-sandbox', reply['text'])
+                    # Get raw text as string.
+                    with open("../data/messages/messages.txt") as f:
+                        text = f.read()
+
+                    # Build the model.
+                    text_model = markovify.Text(text)
+
+                    self.output('#markov-sandbox', text_model.make_sentence())
             self.autoping()
             time.sleep(.1)
 
