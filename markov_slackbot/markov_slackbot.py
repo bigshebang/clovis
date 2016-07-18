@@ -28,15 +28,12 @@ class MarkovSlackbot(object):
 
     def start(self):
         self.connect()
-        self.user_id = self.slack_client.server.users.find(self.slack_client.server.username).id
+        self.user_id = self.slack_client.server.users.find(
+            self.slack_client.server.username).id
         while True:
             for reply in self.slack_client.rtm_read():
                 print(reply)
-                if ('type' in reply and
-                    reply['type'] == 'message' and 
-                    ('<@' + self.user_id + '>' in reply['text'] or 
-                        self.slack_client.server.username in reply['text']
-                    )):
+                if (self.qualify_respondable(reply)):
                     self.output('#markov-sandbox', reply['text'])
             self.autoping()
             time.sleep(.1)
@@ -50,3 +47,18 @@ class MarkovSlackbot(object):
     def output(self, channel, message):
         channel = self.slack_client.server.channels.find(channel)
         channel.send_message(message)
+
+    def qualify_respondable(self, reply):
+        """
+        """
+        if 'type' not in reply:
+            return False
+
+        if reply['type'] != 'message':
+            return False
+
+        if ('<@' + self.user_id + '>' in reply['text'] or
+           self.slack_client.server.username in reply['text']):
+            return True
+        else:
+            return False
