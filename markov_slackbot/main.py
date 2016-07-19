@@ -66,3 +66,21 @@ def clean_raw_slack_dir(raw_dir, clean_dir):
             clean_filepath = path.join(clean_root, clean_filename)
 
             clean_raw_slack_json(raw_filepath, clean_filepath)
+
+
+def generate_example_config_file():
+    """Create an example config file.
+    """
+
+    example_config = {
+        'SLACK_TOKEN': 'your token here',
+        'log_dir': 'raw_logs',
+        'mixin_dir': 'mixins'
+    }
+
+    example_config_json = json.dumps(example_config, sort_keys=True, indent=4)
+
+    example_config_file = open('config.json.example', 'a')
+    example_config_file.seek(0)
+    example_config_file.truncate()
+    example_config_file.write(example_config_json)

@@ -2,7 +2,10 @@
 
 import click
 
-from main import markov_slackbot, clean_raw_slack_json, clean_raw_slack_dir
+from main import markov_slackbot
+from main import clean_raw_slack_json
+from main import clean_raw_slack_dir
+from main import generate_example_config_file
 
 
 @click.group()
@@ -33,8 +36,15 @@ def clean_dir(raw_dir_name, clean_dir_name):
     clean_raw_slack_dir(raw_dir_name, clean_dir_name)
 
 
+@click.command()
+def generate_example_config():
+    """Generate an example config file."""
+    generate_example_config_file()
+
+
 if __name__ == "__main__":
     main.add_command(run_bot)
     main.add_command(clean_file)
     main.add_command(clean_dir)
+    main.add_command(generate_example_config)
     main()
