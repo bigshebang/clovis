@@ -4,8 +4,8 @@ import json
 import pandas as pd
 from os import path, makedirs, walk
 
-from markov_slackbot import MarkovSlackbot
-from data_clean import parse_slack_json
+from markov_slackbot.markov_slackbot import MarkovSlackbot
+from markov_slackbot.data_clean import parse_slack_json
 
 
 def markov_slackbot(config_file):
@@ -74,7 +74,8 @@ def generate_example_config_file():
 
     example_config = {
         'SLACK_TOKEN': 'your token here',
-        'log_dir': 'raw_logs',
+        'raw_chatlog_dir': 'raw_logs',
+        'clean_chatlog_dir': 'clean_logs',
         'mixin_dir': 'mixins'
     }
 
@@ -84,3 +85,19 @@ def generate_example_config_file():
     example_config_file.seek(0)
     example_config_file.truncate()
     example_config_file.write(example_config_json)
+
+
+def prepare_environment():
+    """Prepare the environment for the bot.
+    """
+
+    if not path.exists('raw_logs'):
+        makedirs('raw_logs')
+
+    if not path.exists('mixins'):
+        makedirs('mixins')
+
+    if not path.exists('clean_logs'):
+        makedirs('clean_logs')
+
+    generate_example_config_file()

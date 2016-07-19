@@ -2,19 +2,30 @@
 
 import click
 
-from main import markov_slackbot
-from main import clean_raw_slack_json
-from main import clean_raw_slack_dir
-from main import generate_example_config_file
+from markov_slackbot.main import markov_slackbot
+from markov_slackbot.main import clean_raw_slack_json
+from markov_slackbot.main import clean_raw_slack_dir
+from markov_slackbot.main import generate_example_config_file
+from markov_slackbot.main import prepare_environment
+
+
+def main():
+    cli.add_command(run_bot)
+    cli.add_command(clean_file)
+    cli.add_command(clean_dir)
+    cli.add_command(generate_example_config)
+    cli.add_command(prepare_env)
+    cli()
 
 
 @click.group()
-def main():
+def cli():
     pass
 
 
 @click.command()
-@click.argument('config_file')
+@click.option('--config_file', default='config.json',
+              help='Configuration filepath.')
 def run_bot(config_file):
     """Start the bot."""
     markov_slackbot(config_file)
@@ -29,8 +40,9 @@ def clean_file(raw_filepath, clean_filepath):
 
 
 @click.command()
-@click.argument('raw_dir_name')
-@click.argument('clean_dir_name')
+@click.option('--raw_dir_name', default='raw_logs', help='Raw log directory.')
+@click.option('--clean_dir_name', default='clean_logs',
+              help='Clean log directory')
 def clean_dir(raw_dir_name, clean_dir_name):
     """Clean a directory of raw slack logfiles."""
     clean_raw_slack_dir(raw_dir_name, clean_dir_name)
@@ -42,9 +54,11 @@ def generate_example_config():
     generate_example_config_file()
 
 
+@click.command()
+def prepare_env():
+    """Prepare the environment for the bot."""
+    prepare_environment()
+
+
 if __name__ == "__main__":
-    main.add_command(run_bot)
-    main.add_command(clean_file)
-    main.add_command(clean_dir)
-    main.add_command(generate_example_config)
     main()
