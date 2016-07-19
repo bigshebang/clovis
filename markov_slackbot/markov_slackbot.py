@@ -22,6 +22,9 @@ class MarkovSlackbot(object):
 
         # Unpack Config
         self.token = config.get('SLACK_TOKEN')
+        self.raw_chatlog_dir = config.get('raw_chatlog_dir')
+        self.clean_chatlog_dir = config.get('clean_chatlog_dir')
+        self.mixin_dir = config.get('mixin_dir')
 
         self.slack_client = None
         self.last_ping = 0
@@ -101,7 +104,7 @@ class MarkovSlackbot(object):
         channels = ['general', 'random']
         paths = []
         for c in channels:
-            paths.append(path.join(path.pardir, 'cleandata', c))
+            paths.append(path.join(self.clean_chatlog_dir, c))
 
         text = ''
         for p in paths:
@@ -118,7 +121,25 @@ class MarkovSlackbot(object):
         mixin_weights = []
         params = []
 
-        dictionary = json.loads(open('dictionary.json').read())
+        dictionary = {
+            'small': [
+                'a little of',
+                'a little',
+                'some of',
+                'a little bit of',
+                'a bit of',
+                'a dash of',
+                'just a dash of'
+            ],
+            'big': [
+                'a lot of',
+                'a ton of',
+                'a whole bunch of',
+                'a large amount of',
+                'a shitload of',
+                'a shitstorm of'
+            ]
+        }
 
         #check if we have mixins
         search = re.search('(' + '|'.join(dictionary['small'] + dictionary['big']) + ')', reply['text'])
@@ -134,7 +155,7 @@ class MarkovSlackbot(object):
             model_param = re.sub('(' + '|'.join(dictionary['small'] + dictionary['big']) + ')', '', param)
             model_param = re.sub(' ', '', model_param).lower()
 
-            with open(path.join(path.pardir, 'mixins', model_param,
+            with open(path.join(self.mixin_dir, model_param,
                       model_param + '.txt')) as f:
                 text = f.read()
             mixin_models.append(markovify.Text(text))
