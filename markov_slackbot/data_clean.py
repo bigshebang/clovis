@@ -62,10 +62,11 @@ class Data(object):
                 continue
             files = listdir(path.join(path.pardir, 'data', folder))
             for file in files:
-                file = pd.read_json(path.join(path.pardir, 'data', folder,
-                                    file))
-                messages = self.clean_data(file)
-                self.write_to_file(messages)
+                if('json' in file):
+                    file = pd.read_json(path.join(path.pardir, 'data', folder,
+                                        file))
+                    messages = self.clean_data(file)
+                    self.write_to_file(messages)
 
 
 def main():
