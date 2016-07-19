@@ -6,6 +6,9 @@ import re
 import json
 from os import path
 
+from os import listdir
+from os.path import isfile, join
+
 from slackclient import SlackClient
 
 
@@ -43,7 +46,8 @@ class MarkovSlackbot(object):
                     try:
                         self.output(reply['channel'],
                                 self.generate_model(reply).make_sentence())
-                    except:
+                    except Exception as e:
+                        print(e)
                         self.output(reply['channel'],
                                 "I'm sorry <@" + reply['user'] + ">, I'm afraid I can't do that.")
             self.autoping()
@@ -81,7 +85,7 @@ class MarkovSlackbot(object):
             return False
 
         # Prevents loops from multiple instances.
-        if reply['user'] == self.user_id:
+        if 'user' in reply and reply['user'] == self.user_id:
             return False
 
         # Did the message mention the bot?
@@ -94,9 +98,18 @@ class MarkovSlackbot(object):
 
     def generate_model(self, reply):
         # Get raw text as string.
-        with open(path.join(path.pardir, 'data', 'messages',
-                            'messages.txt')) as f:
-            text = f.read()
+        channels = ['general', 'random']
+        paths = []
+        for c in channels:
+            paths.append(path.join(path.pardir, 'cleandata', c))
+
+        text = ''
+        for p in paths:
+            onlyfiles = [f for f in listdir(p) if isfile(join(p, f))]
+
+            for file in onlyfiles:
+                with open(join(p, file)) as f:
+                    text += f.read()
 
         # Build the model.
         text_model = markovify.Text(text)
@@ -110,7 +123,7 @@ class MarkovSlackbot(object):
         #check if we have mixins
         search = re.search('(' + '|'.join(dictionary['small'] + dictionary['big']) + ')', reply['text'])
         if search:
-            params = reply['text'][search.start():].split('and')
+            params = reply['text'][search.start():].split(' and')
 
         for param in params:
             if re.search('(' + '|'.join(dictionary['small']) + ')', param):
@@ -118,14 +131,15 @@ class MarkovSlackbot(object):
             elif re.search('(' + '|'.join(dictionary['big']) + ')', param):
                 mixin_weights.append(2)
 
-            model_param = re.sub('(' + '|'.join(dictionary['small'] + dictionary['big']) + ')', '', param).strip()
+            model_param = re.sub('(' + '|'.join(dictionary['small'] + dictionary['big']) + ')', '', param)
+            model_param = re.sub(' ', '', model_param).lower()
 
-            with open(path.join(path.pardir, 'data', model_param,
+            with open(path.join(path.pardir, 'mixins', model_param,
                       model_param + '.txt')) as f:
                 text = f.read()
             mixin_models.append(markovify.Text(text))
 
         mixin_models.append(text_model)
-        mixin_weights.append(0.1)
+        mixin_weights.append(0.5)
 
         return markovify.combine(mixin_models, mixin_weights)
