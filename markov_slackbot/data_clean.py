@@ -25,14 +25,10 @@ def remove_subtypes(data):
 
     # replace in line sections (ie ``` code ```)
     messages['text'] = messages['text'].str.replace(r'(```)[^;]*(```)', '')
-    # replace reaction in text
-    messages['text'] = messages['text'].str.replace(r'(:)[^<>]*(:)', '')
     # replace every <> except for mentions
     messages['text'] = messages['text'].str.replace(r'(<)[^!@<>]*(>)', '')
     # replace &gt;
     messages['text'] = messages['text'].str.replace('&gt;', '')
-    # replace ": "
-    messages['text'] = messages['text'].str.replace(': ', '')
     # replace " \\' " with " ' "
     messages['text'] = messages['text'].str.replace("\\'", "'")
 
