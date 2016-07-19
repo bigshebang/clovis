@@ -10,9 +10,9 @@ class Data(object):
         self.messages_file.truncate()
 
     def clean_data(self, data):
-        """
-        function will remove all messages that contain subtypes /ie. not clean
-         messages (comments, file uploads)
+        """Removes all messages that contain subtypes (ie. not clean messages
+        (comments, file uploads).
+        :param data: A file containing Slack logs.
         """
         # regex will clean all reaction from messages
         messages = data[(data['type'] == 'message') &
@@ -36,10 +36,13 @@ class Data(object):
         return messages['text'].astype(str)
 
     def write_to_file(self, messages):
-        # open file and append messages to txt
+        """Open file and append messages to text.
+
+        :param messages: Messages to append.
+        """
+
         messages_file = open(path.join(path.pardir, 'data', 'messages',
                              'messages.txt'), 'a')
-
 
         for message in messages:
             if(len(message.strip(' ')) > 0):
@@ -48,7 +51,7 @@ class Data(object):
                     not last_char == '?' and
                     not last_char == '!' and
                     not last_char == '\n' and
-                   len("".join(message.split(' ')))>0 and
+                   len("".join(message.split(' '))) > 0 and
                    len(message) > 0):
                     message += '. '
                 messages_file.write(message)
@@ -72,6 +75,62 @@ class Data(object):
 def main():
     data = Data()
     data.get_data()
+
+
+def parse_slack_json(raw_file_json):
+    """Clean raw Slack logs.
+
+    :param raw_file_json: The json to clean.
+    :returns: The cleaned data.
+    """
+
+    stripped_data = remove_subtypes(raw_file_json)
+    clean_data = add_punctuation(stripped_data)
+    return clean_data
+
+
+def remove_subtypes(data):
+    """Removes all messages that contain subtypes (ie. not clean messages
+    (comments, file uploads).
+    :param data: A file containing Slack logs.
+    """
+
+    # regex will clean all reaction from messages
+    messages = data[(data['type'] == 'message') &
+                    ('subtype' not in data.columns)]
+
+    # replace in line sections (ie ``` code ```)
+    messages['text'] = messages['text'].str.replace(r'(```)[^;]*(```)', '')
+    # replace reaction in text
+    messages['text'] = messages['text'].str.replace(r'(:)[^<>]*(:)', '')
+    # replace every <>
+    messages['text'] = messages['text'].str.replace(r'(<)[^<>]*(>)', '')
+    # replace &gt;
+    messages['text'] = messages['text'].str.replace('&gt;', '')
+    # replace &amp;
+    messages['text'] = messages['text'].str.replace('&amp;', '')
+    # encode to string
+    return messages['text'].astype(str)
+
+
+def add_punctuation(stripped_data):
+    """Add periods to messages with no punctuation.
+
+    :param stripped_data: Already stripped down Slack data.
+    :returns punctuated_data: Data with punctuation.
+    """
+
+    punctuated_data = ''
+
+    for message in stripped_data:
+        if ((not message.endswith('.') or
+            not message.endswith('?') or
+           not message.endswith('!')) and
+           len(message) > 0):
+            message += '. '
+        punctuated_data += message
+
+    return punctuated_data
 
 
 if __name__ == "__main__":
