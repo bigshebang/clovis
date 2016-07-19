@@ -54,7 +54,7 @@ def add_punctuation(stripped_data):
                 not last_char == '\n' and
                len("".join(message.split(' '))) > 0 and
                len(message) > 0):
-                message += '. '
-            punctuated_data += message
+                message += '.'
+            punctuated_data += message + ' '
 
     return punctuated_data

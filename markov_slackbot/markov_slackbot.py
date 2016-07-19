@@ -47,6 +47,7 @@ class MarkovSlackbot(object):
             self.slack_client.server.username).id
         while True:
             for reply in self.slack_client.rtm_read():
+                #print(reply)
                 if (self.qualify_respondable(reply)):
                     try:
                         self.output(reply['channel'],
@@ -91,6 +92,9 @@ class MarkovSlackbot(object):
         if 'type' not in reply:
             return False
 
+        if 'text' not in reply:
+            return False
+
         if reply['type'] != 'message':
             return False
 
@@ -100,7 +104,7 @@ class MarkovSlackbot(object):
 
         # Did the message mention the bot?
         if ('<@' + self.user_id + '>' in reply['text'] or
-           self.slack_client.server.username in reply['text'] or
+           self.slack_client.server.username.lower() in reply['text'].lower() or
            reply['channel'].startswith("D")):
             return True
         else:
@@ -136,7 +140,8 @@ class MarkovSlackbot(object):
                 'a little bit of',
                 'a bit of',
                 'a dash of',
-                'just a dash of'
+                'just a dash of',
+                'less'
             ],
             'big': [
                 'a lot of',
@@ -145,7 +150,8 @@ class MarkovSlackbot(object):
                 'a large amount of',
                 'a shitload of',
                 'a shitstorm of',
-                'lots of'
+                'lots of',
+                'more'
             ]
         }
 
@@ -169,6 +175,6 @@ class MarkovSlackbot(object):
             mixin_models.append(markovify.Text(text))
 
         mixin_models.append(text_model)
-        mixin_weights.append(0.5)
+        mixin_weights.append(0.1)
 
         return markovify.combine(mixin_models, mixin_weights)
