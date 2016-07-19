@@ -40,9 +40,12 @@ class MarkovSlackbot(object):
         while True:
             for reply in self.slack_client.rtm_read():
                 if (self.qualify_respondable(reply)):
-
-                    self.output(reply['channel'],
+                    try:
+                        self.output(reply['channel'],
                                 self.generate_model(reply).make_sentence())
+                    except:
+                        self.output(reply['channel'],
+                                "I'm sorry <@" + reply['user'] + ">, I'm afraid I can't do that.")
             self.autoping()
             time.sleep(.1)
 
