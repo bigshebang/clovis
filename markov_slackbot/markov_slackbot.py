@@ -4,6 +4,8 @@ import time
 import markovify
 import re
 import json
+
+from markov_slackbot.data_clean import add_punctuation
 from os import path
 
 from os import listdir
@@ -53,6 +55,11 @@ class MarkovSlackbot(object):
                         print(e)
                         self.output(reply['channel'],
                                 "I'm sorry <@" + reply['user'] + ">, I'm afraid I can't do that.")
+                else:
+                    if 'channel' in reply and 'text' in reply and reply['user'] != self.user_id:
+                        p = path.join(self.clean_chatlog_dir, self.slack_client.server.channels.find(reply['channel']).name, 'learning.txt')
+                        with open(p, 'a') as f:
+                            f.write(add_punctuation([reply['text']]) + '\n')
             self.autoping()
             time.sleep(.1)
 
@@ -101,7 +108,7 @@ class MarkovSlackbot(object):
 
     def generate_model(self, reply):
         # Get raw text as string.
-        channels = ['general', 'random']
+        channels = ['general', 'random', 'batsignal', 'node', 'whitby']
         paths = []
         for c in channels:
             paths.append(path.join(self.clean_chatlog_dir, c))
@@ -137,7 +144,8 @@ class MarkovSlackbot(object):
                 'a whole bunch of',
                 'a large amount of',
                 'a shitload of',
-                'a shitstorm of'
+                'a shitstorm of',
+                'lots of'
             ]
         }
 
