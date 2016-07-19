@@ -57,7 +57,7 @@ class MarkovSlackbot(object):
                         self.output(reply['channel'],
                                 "I'm sorry <@" + reply['user'] + ">, I'm afraid I can't do that.")
                 else:
-                    if 'channel' in reply and 'text' in reply and reply['user'] != self.user_id:
+                    if 'channel' in reply and 'text' in reply and 'user' in reply and reply['user'] != self.user_id:
                         p = path.join(self.clean_chatlog_dir, self.slack_client.server.channels.find(reply['channel']).name, 'learning.txt')
                         with open(p, 'a') as f:
                             f.write(add_punctuation([reply['text']]) + '\n')
