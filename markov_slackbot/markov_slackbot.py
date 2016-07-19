@@ -2,6 +2,7 @@
 
 import time
 import markovify
+import re
 from os import path
 
 from slackclient import SlackClient
@@ -44,7 +45,23 @@ class MarkovSlackbot(object):
                     # Build the model.
                     text_model = markovify.Text(text)
 
-                    self.output('#markov-sandbox', text_model.make_sentence())
+                    mixins = []
+
+                    params = re.sub('(<@' + self.user_id + '>|marky)', '',
+                                    reply['text']).split()
+
+                    for param in params:
+                        with open(path.join(path.pardir, 'data', param,
+                                  param + '.txt')) as f:
+                            text = f.read()
+                        mixins.append(markovify.Text(text))
+
+                    mixins.append(text_model)
+                    print(dir(mixins))
+                    combined_model = markovify.combine(mixins, [1.8, .2])
+
+                    self.output(reply['channel'],
+                                combined_model.make_sentence())
             self.autoping()
             time.sleep(.1)
 
@@ -71,7 +88,8 @@ class MarkovSlackbot(object):
             return False
 
         if ('<@' + self.user_id + '>' in reply['text'] or
-           self.slack_client.server.username in reply['text']):
+           self.slack_client.server.username in reply['text'] or
+           reply['channel'].startswith("D")):
             return True
         else:
             return False
