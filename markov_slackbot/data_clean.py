@@ -3,24 +3,17 @@ from os import path, listdir
 
 
 class Data(object):
-    """Cleans slack logs to get nice messages for learning.
-    """
     def __init__(self):
-        """Opens a file to write cleaned data to.
-        """
-
         messages_dir = path.join(path.pardir, 'data', 'messages')
         self.messages_file = open(path.join(messages_dir, 'messages.txt'), 'a')
         self.messages_file.seek(0)
         self.messages_file.truncate()
 
     def clean_data(self, data):
-        """Removes all messages that contain subtypes (ie. not clean messages
-        (comments, file uploads).
-
-        :param data: A file containing Slack logs.
         """
-
+        function will remove all messages that contain subtypes /ie. not clean
+         messages (comments, file uploads)
+        """
         # regex will clean all reaction from messages
         messages = data[(data['type'] == 'message') &
                         ('subtype' not in data.columns)]
@@ -29,35 +22,39 @@ class Data(object):
         messages['text'] = messages['text'].str.replace(r'(```)[^;]*(```)', '')
         # replace reaction in text
         messages['text'] = messages['text'].str.replace(r'(:)[^<>]*(:)', '')
-        # replace every <>
-        messages['text'] = messages['text'].str.replace(r'(<)[^<>]*(>)', '')
+        # replace every <> except for mentions
+        messages['text'] = messages['text'].str.replace(r'(<)[^!@<>]*(>)', '')
         # replace &gt;
         messages['text'] = messages['text'].str.replace('&gt;', '')
+        # replace ": "
+        messages['text'] = messages['text'].str.replace(': ', '')
+        # replace " \\' " with " ' "
+        messages['text'] = messages['text'].str.replace("\\'", "'")
         # replace &amp;
-        messages['text'] = messages['text'].str.replace('&amp;', '')
+        # messages['text'] = messages['text'].str.replace('&amp;', '')
         # encode to string
         return messages['text'].astype(str)
 
     def write_to_file(self, messages):
-        """Open file and append messages to text.
-
-        :param messages: Messages to append.
-        """
-
+        # open file and append messages to txt
         messages_file = open(path.join(path.pardir, 'data', 'messages',
                              'messages.txt'), 'a')
+
+
         for message in messages:
-            if ((not message.endswith('.') or
-                not message.endswith('?') or
-               not message.endswith('!')) and
-               len(message) > 0):
-                message += '. '
-            messages_file.write(message + '\n')
+            if(len(message.strip(' ')) > 0):
+                last_char = message.strip(' ')[-1][-1]
+                if (not last_char == '.' and
+                    not last_char == '?' and
+                    not last_char == '!' and
+                    not last_char == '\n' and
+                   len("".join(message.split(' ')))>0 and
+                   len(message) > 0):
+                    message += '. '
+                messages_file.write(message)
         messages_file.close
 
     def get_data(self):
-        """Crawls the data folder and cleans all the logs inside.
-        """
         folders = listdir(path.join(path.pardir, 'data'))
         print(folders)
         for folder in folders:
@@ -72,8 +69,6 @@ class Data(object):
 
 
 def main():
-    """Run the data cleaning.
-    """
     data = Data()
     data.get_data()
 
