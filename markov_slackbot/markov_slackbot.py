@@ -3,6 +3,7 @@
 import time
 import markovify
 import re
+import json
 from os import path
 
 from slackclient import SlackClient
@@ -39,30 +40,9 @@ class MarkovSlackbot(object):
         while True:
             for reply in self.slack_client.rtm_read():
                 if (self.qualify_respondable(reply)):
-                    # Get raw text as string.
-                    with open(path.join(path.pardir, 'data', 'messages',
-                                        'messages.txt')) as f:
-                        text = f.read()
-
-                    # Build the model.
-                    text_model = markovify.Text(text)
-
-                    mixins = []
-
-                    params = re.sub('(<@' + self.user_id + '>|marky)', '',
-                                    reply['text']).split()
-
-                    for param in params:
-                        with open(path.join(path.pardir, 'data', param,
-                                  param + '.txt')) as f:
-                            text = f.read()
-                        mixins.append(markovify.Text(text))
-
-                    mixins.append(text_model)
-                    combined_model = markovify.combine(mixins, [1.8, .2])
 
                     self.output(reply['channel'],
-                                combined_model.make_sentence())
+                                self.generate_model(reply).make_sentence())
             self.autoping()
             time.sleep(.1)
 
@@ -108,3 +88,41 @@ class MarkovSlackbot(object):
             return True
         else:
             return False
+
+    def generate_model(self, reply):
+        # Get raw text as string.
+        with open(path.join(path.pardir, 'data', 'messages',
+                            'messages.txt')) as f:
+            text = f.read()
+
+        # Build the model.
+        text_model = markovify.Text(text)
+
+        mixin_models = []
+        mixin_weights = []
+        params = []
+
+        dictionary = json.loads(open('dictionary.json').read())
+
+        #check if we have mixins
+        search = re.search('(' + '|'.join(dictionary['small'] + dictionary['big']) + ')', reply['text'])
+        if search:
+            params = reply['text'][search.start():].split('and')
+
+        for param in params:
+            if re.search('(' + '|'.join(dictionary['small']) + ')', param):
+                mixin_weights.append(0.5)
+            elif re.search('(' + '|'.join(dictionary['big']) + ')', param):
+                mixin_weights.append(2)
+
+            model_param = re.sub('(' + '|'.join(dictionary['small'] + dictionary['big']) + ')', '', param).strip()
+
+            with open(path.join(path.pardir, 'data', model_param,
+                      model_param + '.txt')) as f:
+                text = f.read()
+            mixin_models.append(markovify.Text(text))
+
+        mixin_models.append(text_model)
+        mixin_weights.append(0.1)
+
+        return markovify.combine(mixin_models, mixin_weights)
