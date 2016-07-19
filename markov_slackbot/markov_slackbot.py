@@ -47,11 +47,12 @@ class MarkovSlackbot(object):
 
                     mixins = []
 
-                    params = re.sub('(<@' + self.user_id + '>|marky)', '', reply['text']).split()
+                    params = re.sub('(<@' + self.user_id + '>|marky)', '',
+                                    reply['text']).split()
 
                     for param in params:
                         with open(path.join(path.pardir, 'data', param,
-                                        param + '.txt')) as f:
+                                  param + '.txt')) as f:
                             text = f.read()
                         mixins.append(markovify.Text(text))
 
@@ -59,7 +60,8 @@ class MarkovSlackbot(object):
                     print(dir(mixins))
                     combined_model = markovify.combine(mixins, [1.8, .2])
 
-                    self.output(reply['channel'], combined_model.make_sentence())
+                    self.output(reply['channel'],
+                                combined_model.make_sentence())
             self.autoping()
             time.sleep(.1)
 
