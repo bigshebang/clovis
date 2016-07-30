@@ -22,11 +22,8 @@ deploy:
     repo: StuartJSquires/markov_slackbot
     tags: false
 env:
-- TOXENV=py35
-- TOXENV=py34
-- TOXENV=py33
-- TOXENV=pypy
+- TOXENV=py
 install: pip install -U tox
 language: python
 python: 3.5
-#script: tox -e ${TOXENV}
+script: tox -e ${TOXENV}

@@ -76,7 +76,8 @@ def generate_example_config_file():
         'SLACK_TOKEN': 'your token here',
         'raw_chatlog_dir': 'raw_logs',
         'clean_chatlog_dir': 'clean_logs',
-        'mixin_dir': 'mixins'
+        'mixin_dir': 'mixins',
+        'send_mentions': False
     }
 
     example_config_json = json.dumps(example_config, sort_keys=True, indent=4)

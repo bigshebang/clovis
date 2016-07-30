@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import time
-import markovify
-import re
-import json
-
-from markov_slackbot.data_clean import add_punctuation
-from os import path
-
+import logging
 from os import listdir
-from os.path import isfile, join
+from os import path
+import re
+import time
 
+import markovify
 from slackclient import SlackClient
+
+import markov_slackbot.data_clean as data_clean
 
 
 class MarkovSlackbot(object):
@@ -22,47 +20,112 @@ class MarkovSlackbot(object):
         """Initialize the Markov slackbot.
         """
 
+        self.logger = logging.getLogger(__name__)
+        self.last_ping = 0
+
         # Unpack Config
         self.token = config.get('SLACK_TOKEN')
         self.raw_chatlog_dir = config.get('raw_chatlog_dir')
         self.clean_chatlog_dir = config.get('clean_chatlog_dir')
         self.mixin_dir = config.get('mixin_dir')
-
-        self.slack_client = None
-        self.last_ping = 0
-
-    def connect(self):
-        """Create a client and connect to slack using the supplied token.
-        """
+        self.send_mentions = config.get('mentions')
 
         self.slack_client = SlackClient(self.token)
-        self.slack_client.rtm_connect()
 
     def start(self):
         """Start the bot.
         """
-
-        self.connect()
-        self.user_id = self.slack_client.server.users.find(
-            self.slack_client.server.username).id
         while True:
-            for reply in self.slack_client.rtm_read():
-                #print(reply)
-                if (self.qualify_respondable(reply)):
-                    try:
-                        self.output(reply['channel'],
-                                self.generate_model(reply).make_sentence())
-                    except Exception as e:
-                        print(e)
-                        self.output(reply['channel'],
-                                "I'm sorry <@" + reply['user'] + ">, I'm afraid I can't do that.")
-                else:
-                    if 'channel' in reply and 'text' in reply and 'user' in reply and reply['user'] != self.user_id:
-                        p = path.join(self.clean_chatlog_dir, self.slack_client.server.channels.find(reply['channel']).name, 'learning.txt')
-                        with open(p, 'a') as f:
-                            f.write(add_punctuation([reply['text']]) + '\n')
+            try:
+                self.main_loop()
+            except Exception:
+                self.logger.exception('Fatal error in main loop.')
+
+    def main_loop(self):
+        """The main loop for the bot.
+        """
+
+        self.slack_client.rtm_connect()
+        self.set_user_info()
+
+        while True:
+            messages = self.slack_client.rtm_read()
+
+            for message in messages:
+                if (self.qualify_respondable(message)):
+                    self.respond(message)
+                elif (self.qualify_learnable(message)):
+                    self.learn_from_message(message)
+
             self.autoping()
             time.sleep(.1)
+
+    def set_user_info(self):
+        """Sets the bot's user info so that it can reply to mentions.
+        """
+        self.username = self.slack_client.server.username
+        user = self.slack_client.server.users.find(self.username)
+        self.user_id = user.id
+
+    def qualify_respondable(self, message):
+        """Determines if the bot should reply to the message
+
+        :param message: A message to qualify for a response.
+        """
+
+        if 'type' not in message:
+            return False
+
+        if 'text' not in message:
+            return False
+
+        if message['type'] != 'message':
+            return False
+
+        # Prevents loops from multiple instances.
+        if 'user' in message and message['user'] == self.user_id:
+            return False
+
+        # Did the message mention the bot?
+        if '<@' + self.user_id + '>' in message['text']:
+            return True
+
+        if self.username.lower() in message['text'].lower():
+            return True
+
+        # Direct message
+        if message['channel'].startswith("D"):
+            return True
+
+        return False
+
+    def respond(self, message):
+        """Respond to message.
+        """
+        try:
+            response = self.generate_model(message).make_sentence()
+            self.send_message(message['channel'], response)
+        except Exception:
+            self.logger.exception('Slack command parsing error.')
+            self.send_message(
+                message['channel'],
+                "I'm sorry <@" + message['user'] + ">, I'm afraid I can't do" +
+                " that.")
+
+    def qualify_learnable(self, message):
+        """Determine if the message should be used for learning.
+        """
+        return ('channel' in message and 'text' in message and
+                'user' in message and message['user'] != self.user_id)
+
+    def learn_from_message(self, message):
+        p = path.join(
+            self.clean_chatlog_dir,
+            self.slack_client.server.channels.find(
+                message['channel']).name, 'learning.txt')
+
+        with open(p, 'a') as f:
+            f.write(data_clean.add_punctuation([message['text']]) + '\n')
 
     def autoping(self):
         """Ping slack every three seconds.
@@ -73,42 +136,17 @@ class MarkovSlackbot(object):
             self.slack_client.server.ping()
             self.last_ping = now
 
-    def output(self, channel, message):
-        """Output message to channel.
+    def send_message(self, channel, message):
+        """Send message to channel.
 
         :param channel: A slack channel.
         :param message: The message to send.
         """
 
-        channel = self.slack_client.server.channels.find(channel)
-        channel.send_message(message)
+        if not self.send_mentions:
+            message = self.clean_reply(message)
 
-    def qualify_respondable(self, reply):
-        """Determines if the bot should reply to the message
-
-        :param reply: A message to qualify for a response.
-        """
-
-        if 'type' not in reply:
-            return False
-
-        if 'text' not in reply:
-            return False
-
-        if reply['type'] != 'message':
-            return False
-
-        # Prevents loops from multiple instances.
-        if 'user' in reply and reply['user'] == self.user_id:
-            return False
-
-        # Did the message mention the bot?
-        if ('<@' + self.user_id + '>' in reply['text'] or
-           self.slack_client.server.username.lower() in reply['text'].lower() or
-           reply['channel'].startswith("D")):
-            return True
-        else:
-            return False
+        self.slack_client.rtm_send_message(channel, message)
 
     def generate_model(self, reply):
         # Get raw text as string.
@@ -119,10 +157,10 @@ class MarkovSlackbot(object):
 
         text = ''
         for p in paths:
-            onlyfiles = [f for f in listdir(p) if isfile(join(p, f))]
+            onlyfiles = [f for f in listdir(p) if path.isfile(path.join(p, f))]
 
             for file in onlyfiles:
-                with open(join(p, file)) as f:
+                with open(path.join(p, file)) as f:
                     text += f.read()
 
         # Build the model.
@@ -155,8 +193,11 @@ class MarkovSlackbot(object):
             ]
         }
 
-        #check if we have mixins
-        search = re.search('(' + '|'.join(dictionary['small'] + dictionary['big']) + ')', reply['text'])
+        # check if we have mixins
+        search = re.search(
+            '(' + '|'.join(dictionary['small'] + dictionary['big']) + ')',
+            reply['text'])
+
         if search:
             params = reply['text'][search.start():].split(' and')
 
@@ -166,15 +207,52 @@ class MarkovSlackbot(object):
             elif re.search('(' + '|'.join(dictionary['big']) + ')', param):
                 mixin_weights.append(2)
 
-            model_param = re.sub('(' + '|'.join(dictionary['small'] + dictionary['big']) + ')', '', param)
+            model_param = re.sub(
+                '(' + '|'.join(dictionary['small'] + dictionary['big']) + ')',
+                '',
+                param)
+
             model_param = re.sub(' ', '', model_param).lower()
 
-            with open(path.join(self.mixin_dir, model_param,
-                      model_param + '.txt')) as f:
+            with open(
+                path.join(
+                    self.mixin_dir,
+                    model_param,
+                    model_param + '.txt')) as f:
                 text = f.read()
+
             mixin_models.append(markovify.Text(text))
 
         mixin_models.append(text_model)
         mixin_weights.append(0.1)
 
         return markovify.combine(mixin_models, mixin_weights)
+
+    def clean_reply(self, message):
+        """Cleans message of mentions and bangs.
+        """
+
+        mention_pattern = '<@([0-9A-z]+)>'
+        bang_pattern = '<!([0-9A-z]+)>'
+
+        mentionless_message = re.sub(
+            mention_pattern,
+            self.replace_mention,
+            message)
+
+        clean_message = re.sub(
+            bang_pattern,
+            self.replace_bang,
+            mentionless_message)
+
+        return clean_message
+
+    def replace_mention(self, match_obj):
+        return '@' + self.get_username(match_obj.group(1))
+
+    def replace_bang(match_obj):
+        return '!' + match_obj.group(1)
+
+    def get_username(self, user_id):
+        user = self.slack_client.server.users.find(user_id)
+        return user.name
