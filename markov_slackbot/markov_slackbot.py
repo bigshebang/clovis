@@ -87,7 +87,7 @@ class MarkovSlackbot(object):
             return False
 
         # Did the message mention the bot?
-        if '<@' + self.user_id + '>' in message['text']:
+        if '<@{0}>'.format(self.user_id) in message['text']:
             return True
 
         if self.username.lower() in message['text'].lower():
@@ -109,8 +109,8 @@ class MarkovSlackbot(object):
             self.logger.exception('Slack command parsing error.')
             self.send_message(
                 message['channel'],
-                "I'm sorry <@" + message['user'] + ">, I'm afraid I can't do" +
-                " that.")
+                ("I'm sorry <@{0}>, I'm afraid I can't do" +
+                 " that.")).format(message['user'])
 
     def qualify_learnable(self, message):
         """Determine if the message should be used for learning.
@@ -195,20 +195,21 @@ class MarkovSlackbot(object):
 
         # check if we have mixins
         search = re.search(
-            '(' + '|'.join(dictionary['small'] + dictionary['big']) + ')',
+            '({0})'.format('|'.join(dictionary['small'] + dictionary['big'])),
             reply['text'])
 
         if search:
             params = reply['text'][search.start():].split(' and')
 
         for param in params:
-            if re.search('(' + '|'.join(dictionary['small']) + ')', param):
+            if re.search('({0})'.format('|'.join(dictionary['small'])), param):
                 mixin_weights.append(0.5)
-            elif re.search('(' + '|'.join(dictionary['big']) + ')', param):
+            elif re.search('({0})'.format('|'.join(dictionary['big'])), param):
                 mixin_weights.append(2)
 
             model_param = re.sub(
-                '(' + '|'.join(dictionary['small'] + dictionary['big']) + ')',
+                '({0})'.format(
+                    '|'.join(dictionary['small'] + dictionary['big'])),
                 '',
                 param)
 
