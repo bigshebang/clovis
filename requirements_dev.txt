@@ -11,11 +11,11 @@ flake8==2.6.0
 idna==2.1
 imagesize==0.7.1
 Jinja2==2.8
+-e git+git@github.com:StuartJSquires/markov_slackbot.git@675f5210924a02803f46c8d38a9477bbfcc6acf6#egg=markov_slackbot
 markovify==0.4.0
 MarkupSafe==0.23
 mccabe==0.5.0
 numpy==1.11.1
-pandas==0.18.1
 pathtools==0.1.2
 pluggy==0.3.1
 py==1.4.31

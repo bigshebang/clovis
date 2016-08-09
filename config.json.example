@@ -1,0 +1,5 @@
+{
+    "SLACK_TOKEN": "your token here",
+    "log_dir": "raw_logs",
+    "mixin_dir": "mixins"
+}
