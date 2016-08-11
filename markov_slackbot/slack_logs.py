@@ -68,10 +68,11 @@ class SlackLogs(object):
 
         for message in log:
             if 'user' in message:
-                if message['user'] in user_logs:
-                    user_logs['user'] += [message]
+                user = message['user']
+                if user in user_logs:
+                    user_logs[user] += [message]
                 else:
-                    user_logs['user'] = [message]
+                    user_logs[user] = [message]
 
         return user_logs
 

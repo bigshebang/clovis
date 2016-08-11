@@ -26,8 +26,9 @@ def generate_example_config_file():
         'SLACK_TOKEN': 'your token here',
         'slack_log_dir': 'slack_logs',
         'clean_chatlog_dir': 'clean_logs',
-        'external_text_dir': 'external_texts',
-        'send_mentions': False
+        'external_texts_dir': 'external_texts',
+        'send_mentions': False,
+        'LOG_LEVEL': 'DEBUG'
     }
 
     example_config_json = json.dumps(example_config, sort_keys=True, indent=4)
