@@ -28,7 +28,8 @@ def generate_example_config_file():
         'clean_chatlog_dir': 'clean_logs',
         'external_texts_dir': 'external_texts',
         'send_mentions': False,
-        'LOG_LEVEL': 'DEBUG'
+        'LOG_LEVEL': 'DEBUG',
+        'SILENT_CHANNELS_FILE': 'silent_channels.json'
     }
 
     example_config_json = json.dumps(example_config, sort_keys=True, indent=4)

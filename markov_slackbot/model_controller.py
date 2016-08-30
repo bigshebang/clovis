@@ -108,13 +108,16 @@ class ModelController(object):
         if non_empty_cleaned_messages:
             training_text = '.\n'.join(non_empty_cleaned_messages)
 
-            model = markovify.Text(training_text)
-
-            self.logger.debug('Generated slack model: {0}'.format(model))
-
+            try:
+                model = markovify.Text(training_text)
+                self.logger.debug('Generated slack model: {0}'.format(model))
+            except Exception:
+                model = None
         else:
-            self.logger.debug('Did not generate slack model.')
             model = None
+
+        if not model:
+            self.logger.debug('Did not generate slack model.')
 
         return model
 
@@ -125,20 +128,13 @@ class ModelController(object):
         :return cleaned_message: cleaned message text.
         """
 
-        # self.logger.debug('Parsing message: {0}'.format(message))
-
         if not self.is_learnable(message):
             return None
 
         cleaned_message = message['text']
 
-        # self.logger.debug(
-        #     'Cleaning message text: {0}'.format(cleaned_message))
-
         for replacement_function in self.replacement_functions:
             cleaned_message = replacement_function(cleaned_message)
-
-        # self.logger.debug('Cleaned message text: {0}'.format(cleaned_message))
 
         return cleaned_message
 

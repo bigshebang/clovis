@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import os
-from os import path
 import re
 import time
 
@@ -23,11 +23,8 @@ class MarkovSlackbot(object):
 
         self.logger = logging.getLogger(__name__)
         self.last_ping = 0
-        self.commands = {
-            "help": lambda channel: self.send_help_message(channel)
-        }
+        self.commands = self.build_commands()
 
-        # Unpack Config
         log_level = config.get('LOG_LEVEL')
         log_level_name = logging.getLevelName(log_level)
         logging.basicConfig(level=log_level_name)
@@ -41,7 +38,27 @@ class MarkovSlackbot(object):
 
         self.slack_logs = slack_logs.SlackLogs(self.slack_log_dir)
 
+        self.silent_channels_file = config.get('SILENT_CHANNELS_FILE')
+        self.silent_channels = self.get_silent_channels(
+            self.silent_channels_file)
+
         self.slack_client = SlackClient(self.token)
+
+    def build_commands(self):
+        return {
+            "help": lambda channel: self.send_help_message(channel),
+            "silence": lambda channel: self.silence(channel),
+            "speak": lambda channel: self.unsilence(channel)
+        }
+
+    def get_silent_channels(self, silent_channels_file):
+        if os.path.isfile(silent_channels_file):
+            with open(silent_channels_file, 'r') as f:
+                silent_channels = json.loads(f.read())
+        else:
+            silent_channels = []
+
+        return silent_channels
 
     def load_external_texts(self, external_texts_dir):
         """Load external texts.
@@ -61,7 +78,7 @@ class MarkovSlackbot(object):
                 external_text_filename)
 
             with open(external_text_filepath, 'r') as external_text_file:
-                text_name = path.splitext(external_text_filename)[0]
+                text_name = os.path.splitext(external_text_filename)[0]
                 external_texts[text_name] = external_text_file.read()
 
         return external_texts
@@ -153,7 +170,7 @@ class MarkovSlackbot(object):
                 for command_name in commands:
                     command_name = self.commands[command_name]
                     command_name(channel)
-            else:
+            elif channel not in self.silent_channels:
                 masters = self.message_interpreter.find_master(message_text)
 
                 channels = self.message_interpreter.find_channels(message_text)
@@ -297,6 +314,15 @@ class MarkovSlackbot(object):
 
         return channel_name
 
+    def save_silent_channels(self):
+        """Save silent channels object.
+        """
+
+        silent_channels_json = json.dumps(self.silent_channels, indent=4)
+
+        with open(self.silent_channels_file, 'w') as silent_channels_file:
+            silent_channels_file.write(silent_channels_json)
+
     def send_help_message(self, channel):
         """Send help message. This string should be imported from elsewhere...
 
@@ -321,5 +347,29 @@ learned from that source.
 
 Hint: You can combine multiple commands.
         """
+
+        self.send_message(channel, message)
+
+    def silence(self, channel):
+        """Silence bot on a channel.
+        """
+        if channel not in self.silent_channels:
+            self.silent_channels += [channel]
+            self.save_silent_channels()
+            message = "Okay, I'll be quiet..."
+        else:
+            message = "I was quiet already. Sorry..."
+
+        self.send_message(channel, message)
+
+    def unsilence(self, channel):
+        """Unsilence bot on a channel.
+        """
+        if channel in self.silent_channels:
+            self.silent_channels.remove(channel)
+            self.save_silent_channels()
+            message = "Thank you!"
+        else:
+            message = "I wasn't silenced to begin with, silly..."
 
         self.send_message(channel, message)
