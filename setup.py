@@ -12,7 +12,6 @@ with open('HISTORY.rst') as history_file:
 requirements = [
     'click>=6.6',
     'markovify>=0.4.0',
-    'pkg-resources>=0.0.0',
     'requests>=2.11.1',
     'six>=1.10.0',
     'slackclient>=1.0.1',
