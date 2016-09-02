@@ -2,10 +2,12 @@
 Credits
 =======
 
-Development Lead
-----------------
+Development Leads
+-----------------
 
 * Stuart Squires <StuartJSquires@gmail.com>
+* Erich Knoop
+* Neil Seward
 
 Contributors
 ------------
