@@ -1,6 +1,6 @@
 click==6.6
 markovify==0.4.0
-requests==2.11.1
+requests==2.19.0
 six==1.10.0
 slackclient==1.0.1
 Unidecode==0.4.19
