@@ -32,7 +32,7 @@ slackclient==1.0.1
 snowballstemmer==1.2.1
 Sphinx==1.4.4
 tox==2.3.1
-Unidecode==0.4.19
+Unidecode==1.1.1
 virtualenv==15.0.2
 watchdog==0.8.3
 websocket-client==0.37.0
