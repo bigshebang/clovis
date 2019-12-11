@@ -28,7 +28,7 @@ pytz==2016.6.1
 PyYAML==3.11
 requests==2.10.0
 six==1.10.0
-slackclient==1.0.1
+slackclient==2.5.0
 snowballstemmer==1.2.1
 Sphinx==1.4.4
 tox==2.3.1
