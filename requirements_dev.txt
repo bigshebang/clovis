@@ -11,7 +11,7 @@ flake8==2.6.0
 idna==2.1
 imagesize==0.7.1
 Jinja2==2.8
-markovify==0.4.0
+markovify==0.8.0
 MarkupSafe==0.23
 mccabe==0.5.0
 pathtools==0.1.2
