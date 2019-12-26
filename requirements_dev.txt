@@ -35,4 +35,4 @@ tox==2.3.1
 Unidecode==0.4.19
 virtualenv==15.0.2
 watchdog==0.8.3
-websocket-client==0.37.0
+websocket-client==0.57.0
