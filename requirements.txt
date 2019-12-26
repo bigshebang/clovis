@@ -4,4 +4,4 @@ requests==2.11.1
 six==1.10.0
 slackclient==1.0.1
 Unidecode==0.4.19
-websocket-client==0.37.0
+websocket-client==0.57.0
