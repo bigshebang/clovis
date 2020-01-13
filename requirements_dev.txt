@@ -6,7 +6,7 @@ cffi==1.7.0
 click==6.6
 coverage==4.1
 cryptography==1.4
-docutils==0.12
+docutils==0.16
 flake8==2.6.0
 idna==2.1
 imagesize==0.7.1
