@@ -30,7 +30,7 @@ requests==2.10.0
 six==1.10.0
 slackclient==1.0.1
 snowballstemmer==1.2.1
-Sphinx==1.4.4
+Sphinx==3.0.2
 tox==2.3.1
 Unidecode==0.4.19
 virtualenv==15.0.2
